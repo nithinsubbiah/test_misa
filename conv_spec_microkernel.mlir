@@ -15,8 +15,10 @@ module attributes {transform.with_named_sequence} {
 
   util.func private @conv_entry_point_k5(%arg0: tensor<2x66x66x1280xf16>, %arg1: tensor<3x3x1280x1280xf16>) 
                                           -> tensor<2x64x64x1280xf16> {
+    %cst_31 = arith.constant 0.000000e+00 : f16
     %wei_empty = tensor.empty() : tensor<1280x3x3x1280xf16>
-    %wei_tr = linalg.transpose ins(%arg1: tensor<3x3x1280x1280xf16>) outs(%wei_empty : tensor<1280x3x3x1280xf16>) permutation = [3, 0, 1, 2] 
+    %87 = linalg.fill ins(%cst_31 : f16) outs(%wei_empty : tensor<1280x3x3x1280xf16>) -> tensor<1280x3x3x1280xf16>
+    %wei_tr = linalg.transpose ins(%arg1: tensor<3x3x1280x1280xf16>) outs(%87 : tensor<1280x3x3x1280xf16>) permutation = [3, 0, 1, 2] 
     
     %hi = arith.constant 66 : i32
     %wi = arith.constant 66 : i32
@@ -34,16 +36,27 @@ module attributes {transform.with_named_sequence} {
     %y = arith.constant 3 : i32
     %x = arith.constant 3 : i32
     %group = arith.constant 1 : i32
+    %magic_0 = arith.constant 2576980378 : i32
+    %magic_1 = arith.constant 1 : i32
+    %magic_2 = arith.constant 1 : i32
+    %magic_3 = arith.constant 2576980378 : i32
+    %magic_4 = arith.constant 0 : i32
+    %magic_5 = arith.constant 0 : i32
+    %shift_pack_0 = arith.constant 151391236 : i32
+    %shift_pack_1 = arith.constant 0 : i32
+    %ks = arith.constant 0 : i32
+    %__pack_0 = arith.constant 0 : i32
 
-    %5 = hal.dispatch.extern "igemm_fwd_gtcx3_nhwc_fp16_bx0_ex1_bt256x128x32_wt32x32x8_ws2x1_wr2x2_ta1x8x4x1_1x4x1x64_tb1x8x2x1_1x4x1x64_gkgs"(%hi, %wi,
-        %n, %k, %c, %ho, %wo, %stride_h, %stride_w, %dilation_h, %dilation_w, %pad_h, %pad_w, %y, %x, %group, %arg0, %wei_tr) :
-        (i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, tensor<2x66x66x1280xf16>, tensor<1280x3x3x1280xf16>) -> tensor<2x64x64x1280xf16>
+    %5 = hal.dispatch.extern "igemm_fwd_gtcx3_nhwc_fp16_bx0_ex1_bt256x128x32_wt32x32x8_ws2x1_wr2x2_ta1x8x4x1_1x4x1x64_tb1x8x2x1_1x4x1x64"(%hi, %wi,
+        %n, %k, %c, %ho, %wo, %stride_h, %stride_w, %dilation_h, %dilation_w, %pad_h, %pad_w, %y, %x, %group,
+        %magic_0, %magic_1, %magic_2, %magic_3, %magic_4, %magic_5, %shift_pack_0, %shift_pack_1, %ks, %__pack_0, %arg0, %wei_tr) :
+        (i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, tensor<2x66x66x1280xf16>, tensor<1280x3x3x1280xf16>) -> tensor<2x64x64x1280xf16>
       count(%device: !hal.device) -> (index, index, index) {
         %c1_0 = arith.constant 1 : index
-        %c1280_0 = arith.constant 2560 : index
+        %c1280_0 = arith.constant 320 : index
         hal.return %c1280_0, %c1_0, %c1_0 : index, index, index
       }
-      layout(#hal.pipeline.layout<push_constants = 16, sets = [
+      layout(#hal.pipeline.layout<push_constants = 26, sets = [
         <0, bindings = [
             <0, storage_buffer, ReadOnly>,
             <1, storage_buffer, ReadOnly>,
@@ -58,7 +71,7 @@ module attributes {transform.with_named_sequence} {
       objects({
         #rocm_target ordinal(0) = [
           #hal.executable.object<{
-            path = "/home/nmeganat/MISA/out/igemm_fwd_gtc_gfx940_nhwc_fp16.hsaco"
+            path = "/data/home/perf/nithin/MISA/out/igemm_fwd_gtc_gfx942_nhwc_fp16.hsaco"
           }>
         ]
       })

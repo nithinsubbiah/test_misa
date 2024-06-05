@@ -32,16 +32,16 @@ typedef struct {
     int y;
     int x;
     int group;
-    // uint32_t magic_0;                       // denom: (gemm_n + n_per_block - 1) / n_per_block
-    // uint32_t magic_1;                       // denom: ho*wo
-    // uint32_t magic_2;                       // denom: wo
-    // uint32_t magic_3;                       // denom: (gemm_m/m_per_block) * (gemm_n/n_per_block)
-    // uint32_t magic_4;                       // denom: x*c
-    // uint32_t magic_5;                       // denom: c
-    // uint32_t shift_pack_0;
-    // uint32_t shift_pack_1;
-    // uint32_t ks;
-    // uint32_t __pack_0;
+    uint32_t magic_0;                       // denom: (gemm_n + n_per_block - 1) / n_per_block
+    uint32_t magic_1;                       // denom: ho*wo
+    uint32_t magic_2;                       // denom: wo
+    uint32_t magic_3;                       // denom: (gemm_m/m_per_block) * (gemm_n/n_per_block)
+    uint32_t magic_4;                       // denom: x*c
+    uint32_t magic_5;                       // denom: c
+    uint32_t shift_pack_0;
+    uint32_t shift_pack_1;
+    uint32_t ks;
+    uint32_t __pack_0;
 } __attribute__((packed)) igemm_fwd_gtc_nhwc_karg_t;
 
 std::vector<char> readFileIntoVector(const char *filename) {
@@ -141,20 +141,20 @@ void run(const char *kernel_name, const char *hsaco_file) {
   karg.y = 3;
   karg.x = 3;
   karg.group = 1;
-  // karg.magic_0 = 2576980378;
-  // karg.magic_1 = 1;
-  // karg.magic_2 = 1;
-  // karg.magic_3 = 2576980378;
-  // karg.magic_4 = 0;
-  // karg.magic_5 = 0;
-  // karg.shift_pack_0 = 151391236;
-  // karg.shift_pack_1 = 0;
-  // karg.ks = 3;
-  // karg.__pack_0 = 0;
+  karg.magic_0 = 2576980378;
+  karg.magic_1 = 1;
+  karg.magic_2 = 1;
+  karg.magic_3 = 2576980378;
+  karg.magic_4 = 0;
+  karg.magic_5 = 0;
+  karg.shift_pack_0 = 151391236;
+  karg.shift_pack_1 = 0;
+  karg.ks = 3;
+  karg.__pack_0 = 0;
 
   // init host side
-  auto loaded_input = load_from_npy("/home/nmeganat/magnum_opus/k5_input_f32.npy");
-  auto loaded_weight = load_from_npy("/home/nmeganat/magnum_opus/k5_filter_f32_nhwc.npy");
+  auto loaded_input = load_from_npy("/data/home/perf/nithin/test_misa/k5_input_f32.npy");
+  auto loaded_weight = load_from_npy("/data/home/perf/nithin/test_misa/k5_filter_f32_nhwc.npy");
 
   float *host_input = loaded_input.data();
   float *host_weight = loaded_weight.data();
@@ -260,10 +260,18 @@ void run(const char *kernel_name, const char *hsaco_file) {
   CHECK_HIP_ERROR(hipEventDestroy(start));
   CHECK_HIP_ERROR(hipEventDestroy(stop));
 
-  for(int i=0; i < 10; i++) {
-    std::cout<<*(((float16*)device_output_dtype)+i) <<", ";
+  std::vector<float> op;
+  op.reserve(karg.ho * karg.wo * karg.k * karg.n);
+  const std::vector<unsigned long> op_shape{static_cast<unsigned long>(karg.n), static_cast<unsigned long>(karg.ho), static_cast<unsigned long>(karg.wo), static_cast<unsigned long>(karg.k)};
+
+  for(int i=0; i < karg.ho * karg.wo * karg.k * karg.n; i++) {
+    // std::cout<<*(((float16*)device_output_dtype)+i) <<", ";
+    op[i] = (float)*(((float16*)device_output_dtype)+i);
   }
-  std::cout<<"\n";
+  // std::cout<<"\n";
+
+  const npy::npy_data_ptr<float> op_npy{op.data(), op_shape, false};
+  write_npy("/data/home/perf/nithin/test_misa/out11_ptr_g3.npy", op_npy);
 
   // free(host_input);
   // free(host_weight);
@@ -286,10 +294,9 @@ void run(const char *kernel_name, const char *hsaco_file) {
 
 int main() {
   // MISA convolution kernel object code compiled for gfx940
-  const char *hsaco_file = "/home/nmeganat/MISA/out/igemm_fwd_gtc_gfx940_nhwc_fp16.hsaco";
+  const char *hsaco_file = "/data/home/perf/nithin/MISA/out/igemm_fwd_gtc_gfx942_nhwc_fp16.hsaco";
   const char *kernel_name =
-      "igemm_fwd_gtcx3_nhwc_fp16_bx0_ex1_bt256x128x32_wt32x32x8_ws2x1_wr2x2_"
-      "ta1x8x4x1_1x4x1x64_tb1x8x2x1_1x4x1x64";
+      "igemm_fwd_gtcx3_nhwc_fp16_bx0_ex1_bt256x128x32_wt32x32x8_ws2x1_wr2x2_ta1x8x4x1_1x4x1x64_tb1x8x2x1_1x4x1x64_gkgs";
   
   run(kernel_name, hsaco_file);
 
