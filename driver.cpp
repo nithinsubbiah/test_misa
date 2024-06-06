@@ -145,10 +145,10 @@ void run(const char *kernel_name, const char *hsaco_file) {
   karg.magic_1 = 1;
   karg.magic_2 = 1;
   karg.magic_3 = 2576980378;
-  karg.magic_4 = 0;
-  karg.magic_5 = 0;
-  karg.shift_pack_0 = 151391236;
-  karg.shift_pack_1 = 0;
+  karg.magic_4 = 286331154;
+  karg.magic_5 = 2576980378;
+  karg.shift_pack_0 = 151391235;
+  karg.shift_pack_1 = 2828;
   karg.ks = 3;
   karg.__pack_0 = 0;
 
@@ -271,7 +271,7 @@ void run(const char *kernel_name, const char *hsaco_file) {
   // std::cout<<"\n";
 
   const npy::npy_data_ptr<float> op_npy{op.data(), op_shape, false};
-  write_npy("/data/home/perf/nithin/test_misa/out11_ptr_g3.npy", op_npy);
+  write_npy("/data/home/perf/nithin/test_misa/out/out11_ptr_g3.npy", op_npy);
 
   // free(host_input);
   // free(host_weight);
@@ -296,7 +296,7 @@ int main() {
   // MISA convolution kernel object code compiled for gfx940
   const char *hsaco_file = "/data/home/perf/nithin/MISA/out/igemm_fwd_gtc_gfx942_nhwc_fp16.hsaco";
   const char *kernel_name =
-      "igemm_fwd_gtcx3_nhwc_fp16_bx0_ex1_bt256x128x32_wt32x32x8_ws2x1_wr2x2_ta1x8x4x1_1x4x1x64_tb1x8x2x1_1x4x1x64_gkgs";
+      "igemm_fwd_gtcx3_nhwc_fp16_bx0_ex1_bt128x256x32_wt32x32x8_ws1x2_wr2x2_ta1x8x2x1_1x4x1x64_tb1x8x4x1_1x4x1x64_gkgs";
   
   run(kernel_name, hsaco_file);
 

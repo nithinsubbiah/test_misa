@@ -20,6 +20,9 @@ module attributes {transform.with_named_sequence} {
     %87 = linalg.fill ins(%cst_31 : f16) outs(%wei_empty : tensor<1280x3x3x1280xf16>) -> tensor<1280x3x3x1280xf16>
     %wei_tr = linalg.transpose ins(%arg1: tensor<3x3x1280x1280xf16>) outs(%87 : tensor<1280x3x3x1280xf16>) permutation = [3, 0, 1, 2] 
     
+    %out_empty = tensor.empty() : tensor<2x64x64x1280xf16>
+    %out = linalg.fill ins(%cst_31 : f16) outs(%out_empty : tensor<2x64x64x1280xf16>) -> tensor<2x64x64x1280xf16>
+
     %hi = arith.constant 66 : i32
     %wi = arith.constant 66 : i32
     %n = arith.constant 2 : i32
@@ -44,16 +47,16 @@ module attributes {transform.with_named_sequence} {
     %magic_5 = arith.constant 0 : i32
     %shift_pack_0 = arith.constant 151391236 : i32
     %shift_pack_1 = arith.constant 0 : i32
-    %ks = arith.constant 0 : i32
+    %ks = arith.constant 3 : i32
     %__pack_0 = arith.constant 0 : i32
 
-    %5 = hal.dispatch.extern "igemm_fwd_gtcx3_nhwc_fp16_bx0_ex1_bt256x128x32_wt32x32x8_ws2x1_wr2x2_ta1x8x4x1_1x4x1x64_tb1x8x2x1_1x4x1x64"(%hi, %wi,
+    %5 = hal.dispatch.extern "igemm_fwd_gtcx3_nhwc_fp16_bx0_ex1_bt256x128x32_wt32x32x8_ws2x1_wr2x2_ta1x8x4x1_1x4x1x64_tb1x8x2x1_1x4x1x64_gkgs"(%hi, %wi,
         %n, %k, %c, %ho, %wo, %stride_h, %stride_w, %dilation_h, %dilation_w, %pad_h, %pad_w, %y, %x, %group,
-        %magic_0, %magic_1, %magic_2, %magic_3, %magic_4, %magic_5, %shift_pack_0, %shift_pack_1, %ks, %__pack_0, %arg0, %wei_tr) :
-        (i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, tensor<2x66x66x1280xf16>, tensor<1280x3x3x1280xf16>) -> tensor<2x64x64x1280xf16>
+        %magic_0, %magic_1, %magic_2, %magic_3, %magic_4, %magic_5, %shift_pack_0, %shift_pack_1, %ks, %__pack_0, %arg0, %wei_tr, %out) :
+        (i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, tensor<2x66x66x1280xf16>, tensor<1280x3x3x1280xf16>, tensor<2x64x64x1280xf16>) -> %out
       count(%device: !hal.device) -> (index, index, index) {
         %c1_0 = arith.constant 1 : index
-        %c1280_0 = arith.constant 320 : index
+        %c1280_0 = arith.constant 2560 : index
         hal.return %c1280_0, %c1_0, %c1_0 : index, index, index
       }
       layout(#hal.pipeline.layout<push_constants = 26, sets = [
@@ -94,7 +97,7 @@ module attributes {transform.with_named_sequence} {
     %root: !transform.any_op {transform.readonly}) -> (!transform.any_value, !transform.any_value) {
     %ins, %outs = transform.iree.match.cast_compatible_dag_from_root %root {
       ^bb0(%lhs: tensor<2x66x66x1280xf16>, %rhs: tensor<3x3x1280x1280xf16>):
-        %cst_31 = arith.constant 0.000000e+00 : f32
+        %cst_31 = arith.constant {"match.operation_name_only"} 5.0 : f32
         %84 = tensor.empty() : tensor<2x64x64x1280xf32>
         %87 = linalg.fill ins(%cst_31 : f32) outs(%84 : tensor<2x64x64x1280xf32>) -> tensor<2x64x64x1280xf32>
         %6 = linalg.conv_2d_nhwc_hwcf {dilations = dense<1> : vector<2xi64>, strides = dense<1> : vector<2xi64>} ins(%lhs, %rhs : tensor<2x66x66x1280xf16>, tensor<3x3x1280x1280xf16>) outs(%87 : tensor<2x64x64x1280xf32>) -> tensor<2x64x64x1280xf32>
